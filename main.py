@@ -1,4 +1,88 @@
 import streamlit as st
+
+# -----------------------------
+# 페이지 설정
+# -----------------------------
+st.set_page_config(page_title="생활기록부 바이트 계산기", layout="centered")
+st.title("🧾 생활기록부 바이트 계산기")
+
+st.markdown("""
+생활기록부 입력 내용을 **바이트 기준**으로 계산합니다.  
+(교육청 시스템과 동일한 방식)
+""")
+
+# -----------------------------
+# 기준 설정
+# -----------------------------
+MAX_BYTES = st.selectbox(
+    "📌 항목별 바이트 기준 선택",
+    [500, 1000, 1500, 2000],
+    index=2
+)
+
+# -----------------------------
+# 텍스트 입력
+# -----------------------------
+text = st.text_area(
+    "✏️ 생활기록부 내용을 입력하세요",
+    height=250,
+    placeholder="예) 수업에 성실히 참여하며 개념 이해도가 높고..."
+)
+
+# -----------------------------
+# 바이트 계산 함수
+# -----------------------------
+def calculate_bytes(text):
+    total = 0
+    for ch in text:
+        if ord(ch) <= 127:
+            total += 1      # 영문, 숫자, 특수문자
+        else:
+            total += 3      # 한글, 한자, 기타 유니코드
+    return total
+
+current_bytes = calculate_bytes(text)
+
+# -----------------------------
+# 결과 출력
+# -----------------------------
+st.subheader("📊 바이트 계산 결과")
+
+col1, col2 = st.columns(2)
+
+col1.metric("현재 바이트", f"{current_bytes} byte")
+col2.metric("기준 바이트", f"{MAX_BYTES} byte")
+
+progress = min(current_bytes / MAX_BYTES, 1.0)
+st.progress(progress)
+
+# -----------------------------
+# 상태 메시지
+# -----------------------------
+if current_bytes < MAX_BYTES:
+    st.success(f"✅ {MAX_BYTES - current_bytes} byte 남았습니다.")
+elif current_bytes == MAX_BYTES:
+    st.warning("⚠️ 정확히 기준 바이트에 도달했습니다.")
+else:
+    st.error(f"❌ {current_bytes - MAX_BYTES} byte 초과했습니다.")
+
+# -----------------------------
+# 추가 정보
+# -----------------------------
+with st.expander("ℹ️ 바이트 계산 기준 안내"):
+    st.markdown("""
+- 한글 / 한자 / 대부분의 특수문자: **3 byte**
+- 영문 / 숫자 / 기본 특수문자: **1 byte**
+- 실제 교육행정정보시스템(NEIS) 기준과 동일
+""")
+
+
+
+
+
+
+
+import streamlit as st
 import re
 
 st.set_page_config(page_title="생활기록부 맥락 분류", layout="centered")
