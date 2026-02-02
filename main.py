@@ -70,11 +70,17 @@ def highlight_text(text):
 
     return "".join(html_lines)
 
-# -----------------------------
-# 출력
-# -----------------------------
-st.subheader("🎨 구조 하이라이트 결과")
-st.markdown(highlight_text(text), unsafe_allow_html=True)
+
+
+user_input = st.text_area("생활기록부 문장을 입력하세요")
+
+if user_input:
+    result = highlight_text(user_input)
+    st.markdown(result, unsafe_allow_html=True)
+
+
+
+
 
 # -----------------------------
 # 바이트 상태
