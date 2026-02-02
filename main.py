@@ -2,11 +2,11 @@ import streamlit as st
 import re
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="생활기록부 하이라이트", layout="centered")
-st.title("📘 생활기록부 문장 색상 분류 도구")
+st.set_page_config(page_title="생활기록부 색상 분류", layout="centered")
+st.title("📘 생활기록부 문장 색상 분류 (글씨 색 기준)")
 
 text = st.text_area(
-    "문장을 입력하세요 (줄 구분 없어도 됩니다)",
+    "문장을 입력하세요 (연결된 문장도 가능)",
     height=200,
     placeholder=(
         "[행동] 수업 중 문제를 변형하여 풀이 전략을 설명함. "
@@ -17,23 +17,23 @@ text = st.text_area(
     )
 )
 
+# 글씨 색상 정의
 color_map = {
-    "행동": "#cce5ff",
-    "동기": "#f8d7da",
-    "결론": "#d4edda",
-    "참고": "#e2d9f3",
-    "느낀점": "#ffe5b4"
+    "행동": "#0066cc",   # 파랑
+    "동기": "#cc0000",   # 빨강
+    "결론": "#2e7d32",   # 초록
+    "참고": "#6a1b9a",   # 보라
+    "느낀점": "#ef6c00"  # 주황
 }
 
-def highlight_html(text):
+def color_text(text):
     result = text
     for key, color in color_map.items():
         pattern = rf"\[{key}\](.*?)(?=\[행동\]|\[동기\]|\[결론\]|\[참고\]|\[느낀점\]|$)"
         result = re.sub(
             pattern,
             lambda m: (
-                f"<span style='background-color:{color};"
-                f"padding:4px 6px; border-radius:4px;'>"
+                f"<span style='color:{color}; font-weight:600;'>"
                 f"[{key}] {m.group(1).strip()}</span> "
             ),
             result,
@@ -42,10 +42,9 @@ def highlight_html(text):
     return result
 
 if text:
-    html_content = f"""
-    <div style="font-size:16px; line-height:1.8;">
-        {highlight_html(text)}
+    html = f"""
+    <div style="font-size:17px; line-height:1.9;">
+        {color_text(text)}
     </div>
     """
-
-    components.html(html_content, height=300)
+    components.html(html, height=300)
