@@ -1,11 +1,11 @@
 import streamlit as st
 import re
 
-st.set_page_config(page_title="생활기록부 맥락 기반 분류", layout="centered")
-st.title("📘 생활기록부 맥락 기반 자동 분류")
+st.set_page_config(page_title="생활기록부 맥락 분류", layout="centered")
+st.title("📘 생활기록부 맥락 기반 자동 분류 (동기·행동·평가·느낀점)")
 
 text = st.text_area(
-    "줄글로 입력하세요 (태그 필요 없음)",
+    "줄글로 입력하세요",
     height=200,
     placeholder=(
         "수업 중 문제를 변형하여 풀이 전략을 설명함."
@@ -18,30 +18,30 @@ text = st.text_area(
 def split_sentences(text):
     return [s.strip() for s in re.split(r"[.!?]", text) if s.strip()]
 
-def classify_by_context(text):
+def classify_context(text):
     sentences = split_sentences(text)
 
     result = {
-        "행동": [],
         "동기": [],
-        "결론": [],
+        "행동": [],
+        "평가": [],
         "느낀점": []
     }
 
     for s in sentences:
-        # 동기: 원인, 문제 상황
-        if any(x in s for x in ["때문", "어려워", "필요", "문제"]):
+        # 🔴 동기
+        if any(k in s for k in ["때문", "어려워", "필요", "문제", "부족"]):
             result["동기"].append(s)
 
-        # 느낀점: 1인칭 성찰
-        elif any(x in s for x in ["깨닫", "느끼", "이해하게", "생각하게"]):
+        # 🟠 느낀점
+        elif any(k in s for k in ["깨닫", "느끼", "이해하게", "생각하게", "의미"]):
             result["느낀점"].append(s)
 
-        # 결론: 능력 변화·성과
-        elif any(x in s for x in ["향상", "신장", "강화", "성장", "기를 수 있었"]):
-            result["결론"].append(s)
+        # 🟢 평가
+        elif any(k in s for k in ["향상", "신장", "강화", "돋보", "성장", "능력"]):
+            result["평가"].append(s)
 
-        # 행동: 관찰 가능한 활동
+        # 🔵 행동
         else:
             result["행동"].append(s)
 
@@ -49,18 +49,18 @@ def classify_by_context(text):
 
 if text:
     st.divider()
-    st.subheader("📌 맥락 기반 분류 결과")
+    st.subheader("📌 분류 결과")
 
     icons = {
-        "행동": "🔵 [행동]",
         "동기": "🔴 [동기]",
-        "결론": "🟢 [결론]",
+        "행동": "🔵 [행동]",
+        "평가": "🟢 [평가]",
         "느낀점": "🟠 [느낀점]"
     }
 
-    classified = classify_by_context(text)
+    classified = classify_context(text)
 
-    for key in ["행동", "동기", "결론", "느낀점"]:
+    for key in ["동기", "행동", "평가", "느낀점"]:
         if classified[key]:
             st.markdown(f"**{icons[key]}** {' '.join(classified[key])}")
 
