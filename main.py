@@ -105,3 +105,27 @@ with st.expander("ℹ️ 태그 안내"):
 - 🟣 `[참고]` 참고 문헌  
 - 🟠 `[느낀점]` 성찰  
 """)
+
+
+
+
+import re
+import streamlit as st
+
+def highlight_text(text):
+    patterns = {
+        r"\[행동\](.*)": "#cce5ff",   # 파란색
+        r"\[동기\](.*)": "#f8d7da",   # 빨간색
+        r"\[결론\](.*)": "#d4edda",   # 초록색
+        r"\[참고\](.*)": "#e2d9f3",   # 보라색
+        r"\[느낀점\](.*)": "#ffe5b4"  # 주황색
+    }
+
+    for pattern, color in patterns.items():
+        text = re.sub(
+            pattern,
+            rf"<span style='background-color:{color}; padding:4px; border-radius:4px;'>\g<0></span>",
+            text
+        )
+
+    return text
