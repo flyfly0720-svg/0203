@@ -1,97 +1,107 @@
 import streamlit as st
+import re
 
 # -----------------------------
 # 페이지 설정
 # -----------------------------
-st.set_page_config(
-    page_title="생활기록부 바이트 자가 점검",
-    layout="centered"
-)
+st.set_page_config(page_title="생활기록부 자가 점검", layout="centered")
+st.title("🧑‍🎓 생활기록부 구조 · 바이트 자가 점검")
 
-st.title("🧑‍🎓 생활기록부 바이트 자가 점검")
-st.caption("학생이 직접 확인하는 간단 점검용 도구")
+st.caption("색으로 구조를 확인하고, 바이트를 함께 점검하세요")
 
-# -----------------------------
-# 바이트 기준 (고정)
-# -----------------------------
 MAX_BYTES = 1500
-
-st.info("📌 기준: 생활기록부 한 항목당 **1500 byte**")
+st.info("📌 기준: 항목당 1500 byte")
 
 # -----------------------------
-# 입력 영역
+# 입력
 # -----------------------------
 text = st.text_area(
-    "✏️ 작성한 내용을 그대로 붙여 넣으세요",
-    height=260,
-    placeholder="예) 수업 시간에 질문을 통해 개념을 확장하려는 태도를 보였으며..."
+    "✏️ 문장 앞에 태그를 붙여 입력하세요",
+    height=280,
+    placeholder="[행동] 수업 중 질문을 통해 개념을 확장함."
 )
 
 # -----------------------------
-# 바이트 계산 함수
+# 바이트 계산
 # -----------------------------
 def calculate_bytes(text):
     total = 0
     for ch in text:
-        if ord(ch) <= 127:
-            total += 1   # 영문, 숫자, 기본 기호
-        else:
-            total += 3   # 한글, 한자, 기타
+        total += 1 if ord(ch) <= 127 else 3
     return total
 
 current_bytes = calculate_bytes(text)
 
 # -----------------------------
-# 결과 표시
+# 하이라이트 규칙
 # -----------------------------
-st.subheader("📊 현재 상태")
+highlight_rules = {
+    r"\[행동\](.*)": ("#cce5ff", "🔵 구체적 행동"),
+    r"\[동기\](.*)": ("#f8d7da", "🔴 동기"),
+    r"\[결론\](.*)": ("#d4edda", "🟢 결론"),
+    r"\[참고\](.*)": ("#e2d9f3", "🟣 참고 문헌"),
+    r"\[느낀점\](.*)": ("#ffe5b4", "🟠 느낀점"),
+}
+
+# -----------------------------
+# 하이라이트 처리
+# -----------------------------
+def highlight_text(text):
+    lines = text.split("\n")
+    result = []
+
+    for line in lines:
+        applied = False
+        for pattern, (color, _) in highlight_rules.items():
+            match = re.match(pattern, line)
+            if match:
+                content = match.group(1)
+                result.append(
+                    f"<div style='background-color:{color}; padding:6px; border-radius:6px; margin-bottom:4px;'>"
+                    f"{content}</div>"
+                )
+                applied = True
+                break
+        if not applied:
+            result.append(f"<div style='margin-bottom:4px;'>{line}</div>")
+
+    return "".join(result)
+
+# -----------------------------
+# 결과 출력
+# -----------------------------
+st.subheader("🎨 구조 하이라이트 결과")
+st.markdown(highlight_text(text), unsafe_allow_html=True)
+
+# -----------------------------
+# 바이트 상태
+# -----------------------------
+st.subheader("📊 바이트 상태")
 
 progress = min(current_bytes / MAX_BYTES, 1.0)
 st.progress(progress)
 
 col1, col2 = st.columns(2)
-col1.metric("현재 바이트", f"{current_bytes}")
-col2.metric("남은 바이트", f"{MAX_BYTES - current_bytes}")
+col1.metric("현재 바이트", current_bytes)
+col2.metric("남은 바이트", MAX_BYTES - current_bytes)
 
-# -----------------------------
-# 상태 피드백 (학생용 문장)
-# -----------------------------
-if current_bytes == 0:
-    st.warning("아직 입력된 내용이 없어요.")
-elif current_bytes < MAX_BYTES * 0.8:
-    st.success("👍 여유 있어요. 구체적인 활동을 더 써도 돼요.")
-elif current_bytes < MAX_BYTES:
-    st.info("🙂 거의 다 찼어요. 표현을 다듬으면서 마무리해요.")
-elif current_bytes == MAX_BYTES:
-    st.warning("⚠️ 딱 맞아요. 이 상태로 제출하면 좋아요.")
+if current_bytes > MAX_BYTES:
+    st.error("❌ 바이트 초과! 표현을 줄이세요.")
+elif current_bytes > MAX_BYTES * 0.8:
+    st.warning("⚠️ 거의 찼어요. 불필요한 수식어 점검!")
 else:
-    st.error("❌ 바이트 초과! 불필요한 표현을 줄여야 해요.")
+    st.success("✅ 바이트 여유 있음")
 
 # -----------------------------
-# 자가 점검 체크리스트
+# 안내
 # -----------------------------
-st.subheader("✅ 자가 점검 체크")
-
-st.checkbox("과목명 또는 활동 맥락이 드러나는가?")
-st.checkbox("단순 태도보다 **구체적 행동**이 쓰였는가?")
-st.checkbox("‘열심히’, ‘성실히’ 같은 반복 표현을 줄였는가?")
-st.checkbox("결과보다 **과정·사고**가 드러나는가?")
-
-# -----------------------------
-# 도움말
-# -----------------------------
-with st.expander("💡 바이트 줄이는 팁"):
+with st.expander("ℹ️ 태그 안내"):
     st.markdown("""
-- 의미 없는 수식어 제거  
-  → *매우*, *항상*, *꾸준히*  
-- 같은 뜻 반복 제거  
-- 문장 끝 표현 통일  
-  → `~함`, `~보임`
-- 접속어 과다 사용 주의  
-  → 그리고, 또한, 또한
+- 🔵 `[행동]` : 실제로 한 구체적 활동  
+- 🔴 `[동기]` : 왜 그렇게 했는지  
+- 🟢 `[결론]` : 변화·성과·의미  
+- 🟣 `[참고]` : 자료·탐구 출처  
+- 🟠 `[느낀점]` : 배운 점·성찰  
 """)
 
-# -----------------------------
-# 마무리 메시지
-# -----------------------------
-st.caption("이 도구는 **자가 점검용**입니다. 최종 판단은 교사가 합니다.")
+st.caption("※ 이 도구는 **자가 점검용**입니다.")
